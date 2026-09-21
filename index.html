@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crossfire Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Saira+Condensed:wght@500;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <header id="bar">
+    <div class="brand">Crossfire Lab</div>
+    <div class="info">
+      <span id="modeTag" class="tag" hidden>Replay</span>
+      <span id="gameNo">Game 1</span>
+      <span id="mapName"></span>
+      <span id="clock" aria-live="off"></span>
+      <span id="sps" class="dim"></span>
+    </div>
+    <div class="controls" id="repCtl" hidden>
+      <button id="repPlay" type="button">Pause</button>
+      <div class="speeds" id="repSpeeds" role="group" aria-label="Replay speed"></div>
+      <input type="range" id="repSeek" min="0" max="600" step="1" value="0" aria-label="Replay position">
+      <span id="repTime" class="dim"></span>
+      <button id="raysBtn2" type="button" aria-pressed="true">Rays</button>
+      <button id="repExit" type="button">Back to training</button>
+    </div>
+    <div class="controls" id="trainCtl">
+      <button id="pauseBtn" type="button">Pause</button>
+      <div class="speeds" id="speeds" role="group" aria-label="Simulation speed"></div>
+      <button id="raysBtn" type="button" aria-pressed="true">Rays</button>
+      <button id="saveBtn" type="button">Save</button>
+      <button id="menuBtn" type="button">Menu</button>
+    </div>
+  </header>
+
+  <main id="stage">
+    <canvas id="arena" aria-label="Arena view"></canvas>
+    <ol id="feed" aria-label="Kill feed"></ol>
+    <div id="banner" hidden></div>
+  </main>
+
+  <aside id="side">
+    <div id="cards"></div>
+    <section class="chart">
+      <div class="chart-head">
+        <h2 id="chartTitle">Reward per game</h2>
+        <div class="speeds" role="group" aria-label="Chart shows">
+          <button type="button" id="chartR" aria-pressed="true">Reward</button>
+          <button type="button" id="chartA" aria-pressed="false">Accuracy</button>
+        </div>
+      </div>
+      <canvas id="chart"></canvas>
+      <p class="hint" id="chartHint"></p>
+    </section>
+  </aside>
+</div>
+
+<div id="menu">
+  <div class="menu-inner">
+    <h1>Crossfire<span>Lab</span></h1>
+    <p class="lede">Three fighters learn a top-down firefight from nothing. They see only through rays, choose their own loadouts, and keep what they learn between visits.</p>
+    <p id="saveInfo" class="saveinfo"></p>
+    <div class="actions">
+      <button id="startBtn" type="button" class="primary">Watch training</button>
+      <label class="field">Game length
+        <select id="lenSel">
+          <option value="180">3 minutes</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1200">20 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+      </label>
+    </div>
+    <div class="secondary">
+      <button id="libBtn" type="button">Best games</button>
+      <button id="exportBtn" type="button">Export brains</button>
+      <button id="importBtn" type="button">Import brains</button>
+      <button id="resetBtn" type="button" class="danger">Start over</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    <p id="menuMsg" class="msg" role="status"></p>
+    <details>
+      <summary>How the training works</summary>
+      <p>Each fighter casts 14 rays. Every ray reports distance to a wall, whether it touches an enemy, and whether it crosses fire or a live grenade. A small neural network turns those readings into movement, turning, firing, weapon swaps and utility throws.</p>
+      <p>Each fighter also has a target sensor: a line-of-sight ray to the nearest enemy in its 120 degree view, giving the angle off its crosshair, the distance and the enemy's health.</p>
+      <p>Training uses evolution strategies. Every fighter has one main brain. It makes 16 slightly different copies, 8 pushed one way and 8 the opposite way, and lives out one copy per life. Once every copy has played, the main brain moves a small step toward the copies that scored best. Small steps averaged over 16 lives keep a lucky life from throwing the brain off course.</p>
+      <p>Every life is scored from specific events, listed below. Results (the first group) always count in full. Coaching points (the second group) teach skills like finding enemies and aiming. They start at full strength and fade to 35% over each fighter's first 300 brain updates, so once the basics are learned, winning fights matters most.</p>
+      <table class="reward-table" id="rewardTable"></table>
+      <p>Accuracy is hits divided by shots, with each shotgun pellet counted as a shot. Each card has a "Where the points came from" list for the current game.</p>
+      <p>Loadouts are learned separately. Each fighter tracks how well every main gun, alt gun and utility has scored and picks better ones more often, while still trying the others now and then.</p>
+      <p>Progress saves to this browser automatically. Export brains to move them to another device or to ship them with the site. The 8 highest-action games and the latest game are kept as exact replays under Best games.</p>
+      <p>Keys: Space pauses, R toggles rays, 1 to 6 set speed, Esc opens this menu.</p>
+    </details>
+  </div>
+</div>
+
+<div id="library" hidden>
+  <div class="menu-inner">
+    <h2 class="lib-title">Best games</h2>
+    <p class="lede">Ranked by action: kills and damage across all three fighters. Replays play back exactly as the game happened.</p>
+    <ol id="libList"></ol>
+    <button id="libBack" type="button">Back to menu</button>
+  </div>
+</div>
+
+<script src="js/nn.js"></script>
+<script src="js/weapons.js"></script>
+<script src="js/world.js"></script>
+<script src="js/reward.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/learner.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
